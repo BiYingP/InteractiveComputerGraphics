@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+<script id="phong-vertex-shader" type="x-shader/x-vertex">
+
+attribute vec4 vPosition;
+attribute vec4 vNormal;
+attribute vec2 vTexCoord;
+varying vec3 N, L, E;
+uniform mat4 uModelView;
+uniform mat4 uProjection;
+uniform vec4 uLightPosition;
+uniform mat3 uNormal;
+varying vec2 texCoord;
+
+void main() {
+    vec3 position = -(uModelView * vPosition).xyz;
+    vec3 light = (uModelView * uLightPosition).xyz;
+    L = normalize(light - position);
+    E = normalize(-position);
+    N = normalize((uModelView * vNormal).xyz);
+     
+    gl_Position = uProjection * uModelView * vPosition;
+    
+    texCoord = vTexCoord;
+}
+
+</script>
+
+<script id="phong-fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform vec4 uAmbientProduct;
+uniform vec4 uDiffuseProduct;
+uniform vec4 uSpecularProduct;
+uniform float uShininess;
+varying vec3 N, L, E;
+uniform float scale;
+varying vec2 texCoord;
+uniform sampler2D uSampler;
+
+void main() {
+    vec4 fColor;
+    vec3 H = normalize(L + E); 
+    vec4 ambient = uAmbientProduct;
+    float Kd = max(dot(L, N), 0.0);
+    
+    vec4 diffuse = Kd * texture2D(uSampler, texCoord);
+    
+    float Ks = pow(max(dot(N, H), 0.0), uShininess); 
+    vec4 specular = Ks * uSpecularProduct;
+    if (dot(L, N) < 0.0) specular = vec4(0.0, 0.0, 0.0, 1.0);
+    
+    fColor = ambient + diffuse + specular;
+    fColor.a = 1.0; 
+    gl_FragColor = fColor;
+    
+}    
+</script>
+    
+
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="a8.js"></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+    <br>
+<!--    <input type = 'file' name='file' id = 'files'>-->
+    <select id="projection">
+      <option value="parellel">Parallel</option>
+      <option value="perspective">Perspective</option>
+    </select>
+<!--
+    <ul>
+        <li>Choose File to load SMF models</li>
+    </ul>
+-->
+  
+    <h2>Camera Controls:</h2>
+    <ul>
+    
+        <li>'o' to increase camera radius</li> 
+        <li>'p' to decrease camera radius</li>
+        <li>'q' to increase height</li>
+        <li>'w' to decrease height</li>
+        <li>'x' to rotate left</li>
+        <li>'c' to rotate right</li>
+        <li>'esc' to reset all values</li>
+    </ul>
+ 
+</body>
+</html>
