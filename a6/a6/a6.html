@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script id="g-vertex-shader" type="x-shader/x-vertex">
+attribute vec4 vPosition;
+attribute vec4 vColor;
+attribute vec3 vNormal;
+varying vec4 color;
+uniform mat4 uProjection;
+uniform mat4 uModelView;
+
+uniform vec4 uAmbientProduct;
+uniform vec4 uDiffuseProduct;
+uniform vec4 uSpecularProduct;
+uniform vec4 uLightPosition;
+uniform float uShininess;
+uniform mat3 uNormal;
+uniform float material;
+void main()
+{ 
+
+    vec3 position = (uModelView * vPosition).xyz;
+    vec3 L = normalize((uModelView * uLightPosition).xyz - position);
+    vec3 L1 = normalize((uModelView * uLightPosition).xyz);
+    vec3 E = normalize(-position);
+    vec3 H = normalize(L + E);
+    vec3 H1 = normalize(L1 + E);
+    vec3 N = normalize(uNormal * vNormal);
+    
+    //calculate ambient
+    vec4 ambient = uAmbientProduct;
+    //calculate diffuse
+    float Kd = max(dot(L, N), 0.0);  
+    vec4 diffuse = Kd * uDiffuseProduct; 
+    // calculate specular
+    float Ks = pow(max(dot(N, H), 0.0), uShininess);
+    vec4  specular = Ks * uSpecularProduct;
+    if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+    
+    vec4 ambient1 = uAmbientProduct;
+    float kd1 = max(dot(L1, N), 0.0);
+    vec4 diffuse1 = kd1 * uDiffuseProduct;
+    float ks1 = pow(max(dot(N, H1), 0.0), uShininess);
+    vec4 specular1 = ks1 * uSpecularProduct;
+    if( dot(L1, N) < 0.0 ) specular1 = vec4(0.0, 0.0, 0.0, 1.0);
+
+    vec4 color1 = ambient + diffuse + specular;
+    vec4 color2 = ambient1 + diffuse1 + specular1;
+    
+    color = color1 + color2;
+    
+    if(material == 1.0) color = specular + specular1;
+    if(material == 2.0) color = diffuse + diffuse1;
+    if(material == 3.0) color = diffuse + specular + diffuse1 + specular1;
+    color.a = 1.0;
+    
+    gl_Position = uProjection * uModelView * vPosition;
+ 
+}
+</script>
+
+<script id="g-fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec4 color;
+
+void main()
+
+{
+    gl_FragColor = color;
+}
+</script>
+    
+<script id="phong-vertex-shader" type="x-shader/x-vertex">
+precision mediump float;
+
+attribute vec4 vPosition;
+attribute vec3 vNormal;
+varying vec3 N, L, E, L1;
+uniform mat4 uModelView;
+uniform mat4 uProjection;
+uniform vec4 uLightPosition;
+uniform mat3 uNormal;
+
+void main() {
+    vec3 position = (uModelView * vPosition).xyz;
+    vec3 light = (uModelView * uLightPosition).xyz;
+    L = normalize(light - position);
+    L1 = normalize(light);
+    E = normalize(-position);
+    N = normalize(uNormal * vNormal);
+    gl_Position = uProjection * uModelView * vPosition; 
+}
+
+</script>
+
+<script id="phong-fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform vec4 uAmbientProduct;
+uniform vec4 uDiffuseProduct;
+uniform vec4 uSpecularProduct;
+uniform float uShininess;
+varying vec3 N, L, E, L1;
+uniform float material;
+
+void main() {
+    vec4 fColor;
+    vec4 pColor;
+    vec3 H = normalize(L + E); 
+    vec4 ambient = uAmbientProduct;
+    float Kd = max(dot(L, N), 0.0);
+    vec4 diffuse = Kd * uDiffuseProduct;
+    float Ks = pow(max(dot(N, H), 0.0), uShininess); 
+    vec4 specular = Ks * uSpecularProduct;
+    if (dot(L, N) < 0.0) specular = vec4(0.0, 0.0, 0.0, 1.0);
+    
+    vec3 H1 = normalize(L1+E); 
+    vec4 ambient1 = uAmbientProduct;
+    float Kd1 = max(dot(L1, N), 0.0);
+    vec4 diffuse1 = Kd1 * uDiffuseProduct;
+    float Ks1 = pow(max(dot(N, H1), 0.0), uShininess); 
+    vec4 specular1 = Ks1 * uSpecularProduct;
+    if (dot(L1, N) < 0.0) specular1 = vec4(0.0, 0.0, 0.0, 1.0);
+    
+    fColor = ambient + diffuse + specular;
+    pColor = ambient1 + diffuse1 + specular1;
+
+    vec4 colors = fColor + pColor;
+    
+    if(material == 1.0) colors = specular + specular1;
+    if(material == 2.0) colors = diffuse + diffuse1;
+    if(material == 3.0) colors = diffuse + specular + diffuse1 + specular1;
+    colors.a = 1.0;
+    
+    gl_FragColor = colors; 
+}    
+</script>
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="a6.js"></script>
+
+</head>
+
+<body>
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+    <br>
+    <input type = 'file' name='file' id = 'files'>
+    <br><br>
+    <select id="projection">
+      <option value="parellel">Parallel</option>
+      <option value="perspective">Perspective</option>
+    </select>
+    <select id="shading">
+      <option value="gouraud">Gouraud</option>
+      <option value="phong">Phong</option>
+    </select>
+    <select id="material">
+      <option value="1">Specular</option>
+      <option value="2">Diffuse</option>
+      <option value="3">Mixture</option>
+    </select>
+    
+    <ul>
+        <li>Choose file to load smf models</li>
+        <li>'o' to increase camera radius</li> 
+        <li>'p' to decrease camera radius</li>
+        <li>'q' to increase height</li>
+        <li>'w' to decrease height</li>
+        <li>'x' to rotate left</li>
+        <li>'c' to rotate right</li>
+        <li>'esc' to reset all values</li>
+    </ul>
+ 
+</body>
+</html>
