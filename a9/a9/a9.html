@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script id="color-vertex-shader" type="x-shader/x-vertex">
+attribute vec4 vPosition;
+attribute vec4 vColor;
+attribute vec2 vTexCoord;
+varying vec4 color;
+uniform mat4 uProjection;
+uniform mat4 uModelView;
+uniform vec2 uTranslation;
+varying vec2 texCoord;
+
+void main()
+{ 
+    
+    gl_Position = uProjection * uModelView * vPosition + vec4(uTranslation, 0.0, 1.0);
+    texCoord = vTexCoord;
+ 
+}
+</script>
+
+<script id="color-fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+uniform vec4 color;
+varying vec2 texCoord;
+uniform sampler2D uSampler;
+
+void main()
+
+{
+    gl_FragColor = color * texture2D(uSampler, texCoord);
+}
+</script>
+    
+<script id="phong-vertex-shader" type="x-shader/x-vertex">
+precision mediump float;
+
+attribute vec4 vPosition;
+attribute vec3 vNormal;
+varying vec3 N, L, E;
+uniform mat4 uModelView;
+uniform mat4 uProjection;
+uniform vec4 uLightPosition;
+uniform mat3 uNormal;
+uniform vec2 uTranslation;
+
+void main() {
+    vec3 position = (uModelView * vPosition).xyz;
+    vec3 light = (uModelView * uLightPosition).xyz;
+    L = normalize(light - position);
+    E = normalize(-position);
+    N = normalize(uNormal * vNormal);
+    gl_Position = uProjection * uModelView * vPosition + vec4(uTranslation, 0.0, 1.0) ; 
+}
+
+</script>
+
+<script id="phong-fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform vec4 uAmbientProduct;
+uniform vec4 uDiffuseProduct;
+uniform vec4 uSpecularProduct;
+uniform float uShininess;
+varying vec3 N, L, E;
+
+void main() {
+    vec4 fColor;
+
+    vec3 H = normalize(L + E); 
+    vec4 ambient = uAmbientProduct;
+    float Kd = max(dot(L, N), 0.0);
+    vec4 diffuse = Kd * uDiffuseProduct;
+    float Ks = pow(max(dot(N, H), 0.0), uShininess); 
+    vec4 specular = Ks * uSpecularProduct;
+    if (dot(L, N) < 0.0) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+    
+    fColor = ambient + diffuse + specular;
+    
+    gl_FragColor = fColor; 
+}    
+</script>
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="a9.js"></script>
+
+</head>
+
+<body>
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+    <br>
+    <input type = 'file' name='file' id = 'files'>
+    <br><br>
+<!--
+    <select id="projection">
+      <option value="parellel">Parallel</option>
+      <option value="perspective">Perspective</option>
+    </select>
+    <select id="shading">
+      <option value="gouraud">Gouraud</option>
+      <option value="phong">Phong</option>
+    </select>
+    <select id="material">
+      <option value="1">Specular</option>
+      <option value="2">Diffuse</option>
+      <option value="3">Mixture</option>
+    </select>
+-->
+    
+    <ul>
+        <li>Choose file to load smf models</li>
+        <li>'o' to increase camera radius</li> 
+        <li>'p' to decrease camera radius</li>
+        <li>'q' to increase height</li>
+        <li>'w' to decrease height</li>
+        <li>'x' to rotate left</li>
+        <li>'c' to rotate right</li>
+        <li>'esc' to reset all values</li>
+    </ul>
+ 
+</body>
+</html>
