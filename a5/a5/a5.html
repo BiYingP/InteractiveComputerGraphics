@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+<script id="vertex-shader" type="x-shader/x-vertex">
+attribute vec4 vPosition;
+attribute vec4 vColor;
+varying vec4 color;
+
+uniform mat4 uProjection;
+uniform mat4 uModelView;
+
+
+void main()
+{ 
+    
+    gl_Position = uProjection * uModelView * vPosition;
+    
+    color = vColor;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec4 color;
+
+void main()
+
+{
+    gl_FragColor = color;
+}
+</script>
+    
+
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="a5.js"></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+    <br>
+    <input type = 'file' name='file' id = 'files'>
+    <br><br>
+    <select id="projection">
+        
+        <option value="parellel">Parallel</option>
+        <option value="perspective">Perspective</option> 
+    </select>
+    <ul>
+        <li>Choose File to load SMF models</li>
+        <li>'o' to increase camera radius</li> 
+        <li>'p' to decrease camera radius</li>
+        <li>'q' to increase height</li>
+        <li>'w' to decrease height</li>
+        <li>'x' to rotate left</li>
+        <li>'c' to rotate right</li>
+        <li>'esc' to reset all values</li>
+    </ul>
+ 
+</body>
+</html>
